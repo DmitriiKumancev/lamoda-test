@@ -11,6 +11,11 @@ import (
 	"errors"
 )
 
+type ErrorResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 type Product struct {
 	ID       int    `json:"id" db:"id"`
 	Name     string `json:"name" db:"name"`
