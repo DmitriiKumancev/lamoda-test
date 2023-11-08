@@ -1,29 +1,36 @@
-package main
+package controller
 
 import (
 	"database/sql"
 	"errors"
-	"net/http"
-	"strconv"
-
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
 )
 
 type Product struct {
-	ID       int    `db:"id"`
-	Name     string `db:"name"`
-	Size     string `db:"size"`
-	Code     string `db:"code"`
-	Quantity int    `db:"quantity"`
+	ID       int    `json:"id" db:"id"`
+	Name     string `json:"name" db:"name"`
+	Size     string `json:"size" db:"size"`
+	Code     string `json:"code" db:"code"`
+	Quantity int    `json:"quantity" db:"quantity"`
 }
 
 type Warehouse struct {
-	ID          int    `db:"id"`
-	Name        string `db:"name"`
-	IsAvailable bool   `db:"is_available"`
+	ID          int    `json:"id" db:"id"`
+	Name        string `json:"name" db:"name"`
+	IsAvailable bool   `json:"is_available" db:"is_available"`
 }
 
+// ReserveProducts reserves products
+// @Summary Reserves products
+// @Description Reserves products and updates their quantities
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param productCodes query []string true "Product codes"
+// @Success 204 {string} string ""
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /products/reserve [post]
+// ReserveProducts резервирует продукты
 func ReserveProducts(db *sql.DB, productCodes []string) error {
 	if len(productCodes) == 0 {
 		return errors.New("empty product codes")
@@ -70,6 +77,18 @@ func ReserveProducts(db *sql.DB, productCodes []string) error {
 	return nil
 }
 
+// ReleaseProducts releases products
+// @Summary Releases products
+// @Description Releases reserved products and updates their quantities
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param productCodes query []string true "Product codes"
+// @Success 204 {string} string ""
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /products/release [post]
+// ReleaseProducts отменяет резервирование товаров.
 func ReleaseProducts(db *sql.DB, productCodes []string) error {
 	if len(productCodes) == 0 {
 		return errors.New("empty product codes")
@@ -111,6 +130,18 @@ func ReleaseProducts(db *sql.DB, productCodes []string) error {
 	return nil
 }
 
+// GetRemainingProducts returns remaining products
+// @Summary Returns remaining products
+// @Description Returns the remaining products in the warehouse
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param warehouseID query int true "Warehouse ID"
+// @Success 200 {array} Product
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /products/remaining [get]
+// GetRemainingProducts возвращает оставшееся количество продуктов на складе
 func GetRemainingProducts(db *sql.DB, warehouseID int) ([]Product, error) {
 	rows, err := db.Query("SELECT code, quantity FROM products WHERE warehouse_id=$1", warehouseID)
 	if err != nil {
@@ -131,65 +162,4 @@ func GetRemainingProducts(db *sql.DB, warehouseID int) ([]Product, error) {
 	}
 
 	return products, nil
-}
-
-func main() {
-	db, err := sql.Open("postgres", "dbname=your-db-name user=your-db-user password=your-db-password sslmode=require")
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	router := gin.Default()
-
-	router.POST("/products/reserve", func(c *gin.Context) {
-		var productCodes []string
-		if err := c.ShouldBindJSON(&productCodes); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if err := ReserveProducts(db, productCodes); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Products reserved successfully"})
-	})
-
-	router.POST("/products/release", func(c *gin.Context) {
-		var productCodes []string
-		if err := c.ShouldBindJSON(&productCodes); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if err := ReleaseProducts(db, productCodes); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Products released successfully"})
-	})
-
-	router.GET("/products/remaining/:warehouseID", func(c *gin.Context) {
-		warehouseIDStr := c.Param("warehouseID")
-		warehouseID, err := strconv.Atoi(warehouseIDStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid warehouse ID"})
-			return
-		}
-
-		products, err := GetRemainingProducts(db, warehouseID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get remain product"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"products": products})
-	})
-
-	if err := router.Run(":8080"); err != nil {
-		panic(err)
-	}
 }

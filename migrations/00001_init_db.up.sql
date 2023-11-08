@@ -1,3 +1,4 @@
+-- КОНФИГУРАЦИЯ -- 
 SET statement_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = ON;
@@ -7,6 +8,13 @@ SET search_path = public, extensions;
 SET default_tablespace = '';
 SET default_with_oids = FALSE;
 
+-- ТАБЛИЦЫ --
+CREATE TABLE warehouse (
+  id serial PRIMARY KEY, 
+  name text, 
+  is_available boolean
+);
+
 CREATE TABLE products (
   id serial PRIMARY KEY, 
   name text, 
@@ -15,12 +23,8 @@ CREATE TABLE products (
   quantity integer NOT NULL, 
   warehouse_id integer NOT NULL REFERENCES warehouse (id)
 );
-CREATE TABLE warehouse (
-  id serial PRIMARY KEY, 
-  name text, 
-  is_available boolean
-);
 
+-- СОЗДАНИЕ ИНДЕКСОВ --
 CREATE INDEX idx_products_code ON products (code);
 CREATE INDEX idx_products_quantity ON products (quantity);
 CREATE INDEX idx_warehouse_name ON warehouse (name);
