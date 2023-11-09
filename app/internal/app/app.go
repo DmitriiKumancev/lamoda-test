@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	route "github.com/DmitriiKumancev/lamoda-test/api/routes"
 	config "github.com/DmitriiKumancev/lamoda-test/internal/config"
+	"github.com/DmitriiKumancev/lamoda-test/pkg/client/postgresql"
 	"github.com/DmitriiKumancev/lamoda-test/pkg/logging"
 
 	"github.com/gin-gonic/gin"
@@ -25,25 +27,17 @@ type App struct {
 }
 
 func NewApp(ctx context.Context, config *config.Config) (*App, error) {
-	logging.GetLogger(ctx).Info("router initializing")
+	cfg := postgresql.NewPgConfig(config.DBUser, config.DBPass, config.DBHost, config.DBPort, config.DBName)
+	maxAttempts := 5
+	maxDelay := 3 * time.Second
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		config.DBHost, config.DBPort, config.DBUser, config.DBPass, config.DBName,
-	)
-	println(dsn)
-
-	pgClient, err := sql.Open("postgres", dsn)
+	pgClient, err := postgresql.NewClient(context.Background(), maxAttempts, maxDelay, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = pgClient.Ping(); err != nil {
-		return nil, err
-	}
-
 	router := route.NewRouter(pgClient)
-
-	logging.GetLogger(ctx).Info("swagger docs initializing")
+	logging.GetLogger(ctx).Info("router initializing")
 
 	return &App{
 		cfg:      config,
@@ -86,7 +80,7 @@ func (a *App) startHTTP(ctx context.Context) error {
 		Handler: handler,
 	}
 
-	logging.GetLogger(ctx).Info("application completely initialized and started")
+	logging.GetLogger(ctx).Info("http server completely initialized and started")
 
 	if err = a.httpServer.Serve(listener); err != nil {
 		switch {

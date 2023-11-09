@@ -33,3 +33,4 @@ func GetConfig() *Config {
 	}
 	return instance
 }
+

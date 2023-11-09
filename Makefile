@@ -16,9 +16,15 @@ migrateup:
 	migrate -path migrations -database "$(DB_URL)" -verbose up
 
 migratedown:
-	migrate -path migration -database "$(DB_URL)" -verbose down
+	migrate -path migrations -database "$(DB_URL)" -verbose down
 
 test:
-	go test -v -cover ./...
+	cd app && GO111MODULE=on go test -v -cover ./...
 
-.PHONY: postgres createdb dropdb migratecreate migrateup migratedown test
+swagger:
+	swag init -g ./app/cmd/main.go -o ./app/docs
+
+db_docs:
+	dbdocs build doc/db.dbml 
+
+.PHONY: postgres createdb dropdb migratecreate migrateup migratedown test swagger db_docs

@@ -18,7 +18,7 @@ type pgConfig struct {
 	Database string
 }
 
-// NewPgConfig creates new pg config instance
+// NewPgConfig создает новый инстанс конфига
 func NewPgConfig(username string, password string, host string, port string, database string) *pgConfig {
 	return &pgConfig{
 		Username: username,
@@ -35,8 +35,7 @@ func NewClient(ctx context.Context, maxAttempts int, maxDelay time.Duration, cfg
 		cfg.Username, cfg.Password,
 		cfg.Host, cfg.Port, cfg.Database,
 	)
-	println(dsn)
-
+	
 	err = DoWithAttempts(func() error {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
@@ -64,6 +63,7 @@ func NewClient(ctx context.Context, maxAttempts int, maxDelay time.Duration, cfg
 	return db, nil
 }
 
+// DoWithAttempts задает лимит на количество попыток подключения к базе
 func DoWithAttempts(fn func() error, maxAttempts int, delay time.Duration) error {
 	var err error
 
