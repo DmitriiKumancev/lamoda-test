@@ -30,6 +30,46 @@ type Warehouse struct {
 	IsAvailable bool   `json:"is_available" db:"is_available"`
 }
 
+func CreateWarehouse(db *sql.DB, w *Warehouse) error {
+    stmt, err := db.Prepare("INSERT INTO warehouse(name, is_available) VALUES($1, $2) RETURNING id")
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
+
+    err = stmt.QueryRow(w.Name, w.IsAvailable).Scan(&w.ID)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
+
+func CreateProduct(db *sql.DB, p *Product, warehouseID int) error {
+    stmt, err := db.Prepare("INSERT INTO products(name, size, code, quantity, warehouse_id) VALUES($1, $2, $3, $4, $5) RETURNING id")
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
+
+    err = stmt.QueryRow(p.Name, p.Size, p.Code, p.Quantity, warehouseID).Scan(&p.ID)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func DeleteProduct(db *sql.DB, id int) error {
+    _, err := db.Exec("DELETE FROM products WHERE id = $1", id)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
 // ReserveProducts reserves products
 // @Summary Reserves products
 // @Description Reserves products and updates their quantities
