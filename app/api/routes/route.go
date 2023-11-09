@@ -14,14 +14,12 @@ import (
 )
 
 
-// ErrorResponse структура возвращенной ошибки
 type ErrorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
 func NewRouter(db *sql.DB) *gin.Engine {
-	// Инициализируем роутер gin
 	r := gin.Default()
 
 	r.GET("/swagger/*any", gin.WrapH(httpSwagger.Handler()))
@@ -29,9 +27,7 @@ func NewRouter(db *sql.DB) *gin.Engine {
 		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
 	})
 
-	// Обработчик для создания нового склада
 	r.POST("/create-warehouse", func(c *gin.Context) {
-		// Считываем данные склада из тела запроса
 		var w controller.Warehouse
 		err := c.BindJSON(&w)
 		if err != nil {
@@ -39,18 +35,15 @@ func NewRouter(db *sql.DB) *gin.Engine {
 			return
 		}
 
-		// Создаем новый склад в базе данных
 		err = controller.CreateWarehouse(db, &w)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		// Отправляем ответ с ID нового склада
 		c.JSON(http.StatusCreated, gin.H{"id": w.ID})
 	})
 
-	// Обработчик для создания нового продукта на заданном складе
 	r.POST("/create-product", func(c *gin.Context) {
 		var p controller.Product
 		err := c.BindJSON(&p)
@@ -68,7 +61,6 @@ func NewRouter(db *sql.DB) *gin.Engine {
 		c.JSON(http.StatusCreated, gin.H{"id": p.ID})
 	})
 
-	// Удаление продукта
 	r.DELETE("/delete-product/:id", func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
@@ -84,7 +76,6 @@ func NewRouter(db *sql.DB) *gin.Engine {
 		c.Status(http.StatusNoContent)
 	})
 
-	// Резервирование продуктов
 	r.POST("/reserve-products", func(c *gin.Context) {
 		var productCodes []string
 		if err := c.ShouldBindJSON(&productCodes); err != nil {
@@ -107,7 +98,6 @@ func NewRouter(db *sql.DB) *gin.Engine {
 		c.Status(http.StatusOK)
 	})
 
-	// Отмена резервирования продуктов
 	r.POST("/release-products", func(c *gin.Context) {
 		var productCodes []string
 		if err := c.ShouldBindJSON(&productCodes); err != nil {
@@ -130,7 +120,6 @@ func NewRouter(db *sql.DB) *gin.Engine {
 		c.Status(http.StatusOK)
 	})
 
-	// Получения оставшегося количества продуктов на складе
 	r.GET("/remaining-products/:warehouseID", func(c *gin.Context) {
 		warehouseID := c.Param("warehouseID")
 		var id int
