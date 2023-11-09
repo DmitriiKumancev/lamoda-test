@@ -8,10 +8,9 @@
 
 Библиотеки:
 - github.com/gin-gonic/gin v1.9.1
-- julienschmidt/httprouter v1.3.0
+- swaggo/swag v1.16.2
 - lib/pq v1.10.9
 - sirupsen/logrus v1.9.3
 - swaggo/http-swagger v1.3.4
-- swaggo/swag v1.16.2
 - ilyakaznacheev/cleanenv v1.5.0
 
