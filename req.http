@@ -14,7 +14,7 @@ Content-Type: application/json
 
 {
     "name": "Product 3",
-    "size": 20.00,
+    "size": "10.00",
     "code": "ABC12311",
     "quantity": 10,
     "warehouse_id": 1
